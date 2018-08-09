@@ -8,21 +8,14 @@
         </style>
     </head>
     <body>
-        <h1>Cors Everywhere Test Page</h1>
+        <h1>Jakcodex/Muledump CORS Adapter for Firefox Test Page</h1>
 
         <ul>
-            <li>This page will attempt to load "http://google.com" via xmlHttpRequest with credentials set to true.</li>
+            <li>This page will attempt to load "https://www.realmofthemadgod.com" via xmlHttpRequest with credentials set to true.</li>
             <li>This should always fail by default</li>
             <li>If the script reaches the readyState of "4" with a status code of "0", this presumably means CORS will have blocked the call.</li>
             <li>Enabling the Firefox addon "cors-everywhere" should bypass this restriction, returning readyState "4" and status "200".</li>
         </ul>
-
-        <p>
-            cors everywhere
-            <br /><a href="http://spenibus.net">http://spenibus.net</a>
-            <br /><a href="https://github.com/spenibus/cors-everywhere-firefox-addon">https://github.com/spenibus/cors-everywhere-firefox-addon</a>
-            <br /><a href="https://gitlab.com/spenibus/cors-everywhere-firefox-addon">https://gitlab.com/spenibus/cors-everywhere-firefox-addon</a>
-        </p>
 
         <div id="response" style="padding:4px; border:1px solid #000;">
             waiting for xmlHttpRequest
@@ -30,7 +23,7 @@
 
         <script type="text/javascript">
             var xhr = new XMLHttpRequest();
-            xhr.open("get", "http://google.com", true);
+            xhr.open("get", "https://www.realmofthemadgod.com/", true);
             xhr.withCredentials = true;
             xhr.onreadystatechange = function(r) {
                 document.getElementById("response").innerHTML +=

@@ -1,10 +1,10 @@
 {
     "manifest_version" : 2
 
-    ,"name"        : "CORS Everywhere"
-    ,"version"     : "18.5.30.1913"
-    ,"author"      : "spenibus"
-    ,"description" : "Bypass CORS restrictions by altering http responses."
+    ,"name"        : "Muledump CORS Adapter for Firefox"
+    ,"version"     : "1.0.0"
+    ,"author"      : "jakcodex"
+    ,"description" : "Manages necessary CORS headers for usage with Jakcodex/Muledump."
 
     ,"permissions" : [
          "webRequest"
@@ -18,9 +18,9 @@
     }
 
     ,"browser_action" : {
-         "default_title" : "CORS Everywhere"
+         "default_title" : "Muledump CORS Adapter for Firefox"
         ,"default_icon"  : {
-            "48" : "media/button-48.png"
+            "48" : "media/icon-48.png"
         }
     }
 
@@ -31,7 +31,7 @@
 
     ,"applications": {
         "gecko": {
-            "id": "cors-everywhere@spenibus"
+            "id": "muledump-cors-adapter-firefox@jakcodex"
         }
     }
 }

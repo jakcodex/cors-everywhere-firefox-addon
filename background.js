@@ -5,8 +5,8 @@ var spenibus_corsEverywhere = {
     /***************************************************************************
     props
     ***/
-    enabled                     : false
-    ,activationWhitelistEnabled : false
+    enabled                     : true
+    ,activationWhitelistEnabled : true
     ,prefs                      : {} // holds user prefs
     ,transactions               : {} // contains requests/responses
 
@@ -102,9 +102,14 @@ var spenibus_corsEverywhere = {
         ]).then((res) => {
 
             // get prefs, set default value if n/a
-            spenibus_corsEverywhere.prefs.enabledAtStartup    = res.enabledAtStartup    || false;
+            let defaultWhitelist = [
+                '/^https:\/\/realmofthemadgodhrd\.appspot\.com\/.*$/',
+                '/^https:\/\/rotmgtesting\.appspot\.com\/.*$/',
+                '/^https:\/\/.*?\.realmofthemadgod\.com\/.*$/'
+            ];
+            spenibus_corsEverywhere.prefs.enabledAtStartup    = res.enabledAtStartup    || true;
             spenibus_corsEverywhere.prefs.staticOrigin        = res.staticOrigin        || '';
-            spenibus_corsEverywhere.prefs.activationWhitelist = res.activationWhitelist || '';
+            spenibus_corsEverywhere.prefs.activationWhitelist = defaultWhitelist.join('\r\n');
 
             // parse activation whitelist
             spenibus_corsEverywhere.prefs.activationWhitelist = spenibus_corsEverywhere.prefs.activationWhitelist
@@ -134,17 +139,11 @@ var spenibus_corsEverywhere = {
 
         // tooltip text
         let buttonTitle = spenibus_corsEverywhere.enabled
-            ? 'CorsE enabled, CORS rules are bypassed'
-            : 'CorsE disabled, CORS rules are followed';
-
-        // using activation whitelist while enabled
-        if(spenibus_corsEverywhere.enabled && spenibus_corsEverywhere.activationWhitelistEnabled) {
-            buttonStatus =  'on-filter';
-            buttonTitle  += ' (using activation whitelist)';
-        }
+            ? 'Muledump CORS Adapter enabled'
+            : 'Muledump CORS Adapter disabled';
 
         // proceed
-        browser.browserAction.setIcon({path:{48:'media/button-48-'+buttonStatus+'.png'}});
+        browser.browserAction.setIcon({path:{48:'media/icon-48-'+buttonStatus+'.png'}});
         browser.browserAction.setTitle({title:buttonTitle});
 
         return this;
@@ -208,7 +207,7 @@ var spenibus_corsEverywhere = {
                 pattern = new RegExp(pattern[1], pattern[2]);
 
                 // stop at first match, enable f1ag
-                if(transaction.request.originUrl.match(pattern)) {
+                if(transaction.request.url.match(pattern)) {
                     doProcess = true;
                     break;
                 }
@@ -245,10 +244,19 @@ var spenibus_corsEverywhere = {
                 };
 
                 // update response
-                transaction.response.responseHeaders.push(header)
+                transaction.response.responseHeaders.push(header);
+                transaction.response.responseHeaders.push({
+                    name: 'Access-Control-Expose-Headers',
+                    value: 'X-Jakcodex-CORS'
+                },{
+                    name: 'X-Jakcodex-CORS',
+                    value: 'firefox'
+                });
 
                 // update shorthand
                 transaction.responseHeaders[name] = header;
+                transaction.responseHeaders['Access-Control-Expose-Headers'] = 'X-Jakcodex-CORS';
+                transaction.responseHeaders['X-Jakcodex-CORS'] = 'firefox';
             }
 
             // set "access-control-allow-origin", prioritize "origin" else "*"
