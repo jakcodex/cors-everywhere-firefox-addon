@@ -1,6 +1,6 @@
 # Muledump CORS Adapter for Firefox
 
-View in the [Firefox Add-ons Store](https://addons.mozilla.org/en-US/firefox/addon/muledump-cors-adapter-firefox/).
+View in the [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/muledump-cors-adapter/).
 
 This is a fork of the [CorsEverywhere](https://github.com/spenibus/cors-everywhere-firefox-addon) Firefox add-on that has been updated to work specifically with the [Jakcodex/Muledump](https://github.com/jakcodex/muledump) application.
 

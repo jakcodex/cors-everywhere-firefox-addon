@@ -1,3 +1,5 @@
+var version = '2.0.1';
+
 //************************************************************* class definition
 var spenibus_corsEverywhere = {
 
@@ -250,13 +252,13 @@ var spenibus_corsEverywhere = {
                     value: 'X-Jakcodex-CORS'
                 },{
                     name: 'X-Jakcodex-CORS',
-                    value: 'firefox'
+                    value: version
                 });
 
                 // update shorthand
                 transaction.responseHeaders[name] = header;
                 transaction.responseHeaders['Access-Control-Expose-Headers'] = 'X-Jakcodex-CORS';
-                transaction.responseHeaders['X-Jakcodex-CORS'] = 'firefox';
+                transaction.responseHeaders['X-Jakcodex-CORS'] = version;
             }
 
             // set "access-control-allow-origin", prioritize "origin" else "*"
