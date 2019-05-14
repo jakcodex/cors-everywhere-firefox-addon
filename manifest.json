@@ -1,35 +1,29 @@
 {
-    "manifest_version" : 2
-
-    ,"name"        : "Muledump CORS Adapter for Firefox"
-    ,"version"     : "2.0.1"
-    ,"author"      : "jakcodex"
-    ,"description" : "Manages necessary CORS headers for usage with Jakcodex/Muledump."
-
-    ,"permissions" : [
-         "webRequest"
-        ,"webRequestBlocking"
-        ,"storage"
-        ,"<all_urls>"
-    ]
-
-    ,"background" : {
-        "scripts" : ["background.js"]
-    }
-
-    ,"browser_action" : {
-         "default_title" : "Muledump CORS Adapter for Firefox"
-        ,"default_icon"  : {
-            "48" : "media/icon-48.png"
+    "manifest_version": 2,
+    "name": "Muledump CORS Adapter for Firefox",
+    "version": "2.1.2",
+    "author": "jakcodex",
+    "description": "Manages necessary CORS headers for usage with Jakcodex/Muledump.",
+    "permissions": [
+        "webRequest",
+        "webRequestBlocking",
+        "storage",
+        "<all_urls>"
+    ],
+    "background": {
+        "scripts": ["background.js"]
+    },
+    "browser_action": {
+        "default_title": "Muledump CORS Adapter for Firefox",
+        "default_icon": {
+            "48": "media/icon-48.png"
         }
-    }
-
-    ,"options_ui" : {
-         "page"          : "options.html"
-        ,"browser_style" : true
-    }
-
-    ,"applications": {
+    },
+    "options_ui": {
+        "page":"options.html",
+        "browser_style": true
+    },
+    "applications": {
         "gecko": {
             "id": "muledump-cors-adapter-firefox@jakcodex"
         }

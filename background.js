@@ -1,146 +1,155 @@
-var version = '2.0.1';
+var version = '2.1.2';
+var gaID = 'UA-111254659-6';
+var debug = false;
+var allurls = false;
 
-//************************************************************* class definition
-var spenibus_corsEverywhere = {
+var muledump_cors = {
 
+    //  config
+    enabled: true,
+    usageAnalytics: true,
+    uaLoad: false,
+    cid: Date.now(),
+    prefs: {}, // holds user prefs
+    transactions: {}, // contains requests/responses
+    defaultUrls: [
+        "https://realmofthemadgodhrd.appspot.com/*",
+        "https://rotmgtesting.appspot.com/*",
+        "https://*.realmofthemadgod.com/*"
+    ],
 
-    /***************************************************************************
-    props
-    ***/
-    enabled                     : true
-    ,activationWhitelistEnabled : true
-    ,prefs                      : {} // holds user prefs
-    ,transactions               : {} // contains requests/responses
+    //  initialize
+    init: function() {
 
-
-    /***************************************************************************
-    init
-    ***/
-    ,init : function() {
-
-        // toggle activation on button click
-        browser.browserAction.onClicked.addListener(function(){
-            spenibus_corsEverywhere.toggle();
-        });
-
-        // load prefs
-        spenibus_corsEverywhere.loadPrefs(function(){
-            // enact enabled at startup
-            if(spenibus_corsEverywhere.prefs.enabledAtStartup) {
-                spenibus_corsEverywhere.toggle(true);
-            }
-
-            // update button
-            spenibus_corsEverywhere.updateButton();
-        });
-
-        return this;
-    }
-
-
-    /***************************************************************************
-    toggle
-    ***/
-    ,toggle : function(state) {
-
-        // set state by input
-        if(typeof state === 'boolean') {
-            spenibus_corsEverywhere.enabled = state;
-        }
-        // set state by toggle
-        else {
-            spenibus_corsEverywhere.enabled = !spenibus_corsEverywhere.enabled;
-        }
-
-        // update button
-        spenibus_corsEverywhere.updateButton();
-
-        // clear transactions
-        spenibus_corsEverywhere.transactions = {};
-
-        // add observer, observe http responses
-        if(spenibus_corsEverywhere.enabled) {
-
-            browser.webRequest.onBeforeSendHeaders.addListener(
-                spenibus_corsEverywhere.requestHandler
-                ,{urls: ["<all_urls>"]}
-                ,["blocking" ,"requestHeaders"]
-            );
-
-            browser.webRequest.onHeadersReceived.addListener(
-                spenibus_corsEverywhere.responseHandler
-                ,{urls: ["<all_urls>"]}
-                ,["blocking" ,"responseHeaders"]
-            );
-        }
-
-        // remove observer
-        else {
-
-            browser.webRequest.onBeforeSendHeaders.removeListener(
-                spenibus_corsEverywhere.requestHandler
-            );
-
-            browser.webRequest.onHeadersReceived.removeListener(
-                spenibus_corsEverywhere.responseHandler
-            );
-        }
-
-        return this;
-    }
-
-
-    /***************************************************************************
-    re/load preferences
-    Because fetching prefs returns a promise, we use a callback to do stuff when
-    the promise is fullfilled.
-    ***/
-    ,loadPrefs : function(callback) {
+        console.log('MCA: Initializing');
 
         browser.storage.sync.get([
             'enabledAtStartup',
-            'staticOrigin',
-            'activationWhitelist',
+            'usageAnalytics',
+            'cid'
         ]).then((res) => {
 
-            // get prefs, set default value if n/a
-            let defaultWhitelist = [
-                '/^https:\/\/realmofthemadgodhrd\.appspot\.com\/.*$/',
-                '/^https:\/\/rotmgtesting\.appspot\.com\/.*$/',
-                '/^https:\/\/.*?\.realmofthemadgod\.com\/.*$/'
-            ];
-            spenibus_corsEverywhere.prefs.enabledAtStartup    = res.enabledAtStartup    || true;
-            spenibus_corsEverywhere.prefs.staticOrigin        = res.staticOrigin        || '';
-            spenibus_corsEverywhere.prefs.activationWhitelist = defaultWhitelist.join('\r\n');
+            muledump_cors.enabled = ( typeof res.enabledAtStartup === 'boolean' ) ? res.enabledAtStartup : muledump_cors.enabled;
+            muledump_cors.usageAnalytics = (typeof res.usageAnalytics === 'boolean' ) ? res.usageAnalytics : muledump_cors.usageAnalytics;
+            muledump_cors.cid = res.cid || muledump_cors.cid;
+            browser.storage.sync.set({cid: muledump_cors.cid});
 
-            // parse activation whitelist
-            spenibus_corsEverywhere.prefs.activationWhitelist = spenibus_corsEverywhere.prefs.activationWhitelist
-                ? spenibus_corsEverywhere.prefs.activationWhitelist.split(/[\r\n]+/)
-                : [];
+            // toggle activation on button click
+            browser.browserAction.onClicked.addListener(function () {
+                muledump_cors.toggle();
+            });
 
-            spenibus_corsEverywhere.activationWhitelistEnabled = spenibus_corsEverywhere.prefs.activationWhitelist.length > 0
-                ? true
-                : false;
+            // load prefs
+            muledump_cors.loadPrefs(function () {
 
-            if(callback) {
-                callback();
-            }
+                // enact enabled at startup
+                muledump_cors.enabled ? muledump_cors.on() : muledump_cors.off();
+
+            });
+
+            //  usage analytics
+            muledump_cors.ga('send', 'event', {
+                eventCategory: 'State',
+                eventAction: 'loaded'
+            });
+
+            muledump_cors.ga('send', 'event', {
+                eventCategory: 'Platform',
+                eventAction: 'firefox',
+                eventLabel: version
+            });
+
         });
 
         return this;
-    }
+    },
 
+    //  toggle state
+    toggle: function(state) {
 
-    /***************************************************************************
-    updateButton
-    ***/
-    ,updateButton : function() {
+        // set state by input
+        if(typeof state === 'boolean') {
+            muledump_cors.enabled = state;
+        }
+        // set state by toggle
+        else {
+            muledump_cors.enabled = !muledump_cors.enabled;
+        }
+
+        // add observer
+        muledump_cors.enabled ? muledump_cors.on() : muledump_cors.off();
+
+        muledump_cors.ga('send', 'event', {
+            eventCategory: 'Active',
+            eventLabel: ( muledump_cors.enabled === true ) ? 'true' : 'false'
+        });
+
+        return this;
+    },
+
+    //  activate extension and enable listener
+    on: function() {
+
+        console.log('MCA: Listening for URLs: ', muledump_cors.defaultUrls.join(', '));
+        chrome.webRequest.onHeadersReceived.removeListener(muledump_cors.responseListener);
+        chrome.webRequest.onHeadersReceived.addListener(muledump_cors.responseListener, {
+            urls: (allurls === true) ? ["<all_urls>"] : muledump_cors.defaultUrls
+        }, ["blocking", "responseHeaders"]);
+        muledump_cors.updateButton(true);
+
+    },
+
+    //  deactivate extension and remove listener
+    off: function() {
+
+        console.log('MCA: Disabled');
+        chrome.webRequest.onHeadersReceived.removeListener(muledump_cors.responseListener);
+        muledump_cors.updateButton(false);
+
+    },
+
+    //  toggle use of <all_urls> for debugging
+    toggle_allurls: function(d) {
+
+        if ( typeof d === 'boolean' ) debug = d;
+        allurls = !allurls;
+        muledump_cors.on();
+
+    },
+
+    //  load preferences
+    loadPrefs: function(callback) {
+
+        browser.storage.sync.get([
+            'enabledAtStartup',
+            'usageAnalytics',
+            'cid'
+        ]).then((res) => {
+
+            console.log('prefs', res);
+            muledump_cors.enabled = ( typeof res.enabledAtStartup === 'boolean' ) ? res.enabledAtStartup : muledump_cors.enabled;
+            muledump_cors.usageAnalytics = (typeof res.usageAnalytics === 'boolean' ) ? res.usageAnalytics : muledump_cors.usageAnalytics;
+            muledump_cors.cid = res.cid || muledump_cors.cid;
+            if (callback) callback();
+
+        });
+
+        return this;
+
+    },
+
+    //  update browser button
+    updateButton: function(state) {
+
+        if ( state === undefined ) state = muledump_cors.enabled;
+        if ( typeof state !== 'boolean' ) state = muledump_cors.enabled;
+        muledump_cors.enabled = state;
 
         // icon
-        let buttonStatus = spenibus_corsEverywhere.enabled ? 'on' : 'off';
+        var buttonStatus = state ? 'on' : 'off';
 
         // tooltip text
-        let buttonTitle = spenibus_corsEverywhere.enabled
+        var buttonTitle = state
             ? 'Muledump CORS Adapter enabled'
             : 'Muledump CORS Adapter disabled';
 
@@ -149,159 +158,90 @@ var spenibus_corsEverywhere = {
         browser.browserAction.setTitle({title:buttonTitle});
 
         return this;
-    }
 
+    },
 
-    /***************************************************************************
-    requestHandler
-    ***/
-    ,requestHandler : function(request) {
+    //  handle responses
+    responseListener: function(details) {
 
-        // prepare transaction, store transaction request
-        let transaction = {
-             request         : request
-            ,requestHeaders  : {}
-            ,response        : {}
-            ,responseHeaders : {}
-        };
+        var flag = false,
+            rule = {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+            };
 
-        // shorthand access to request headers
-        for(let header of request.requestHeaders) {
-            transaction.requestHeaders[header.name.toLowerCase()] = header;
-        }
+        //  generate a sanitized url (details.url without the query string)
+        var url = details.url.substring(0, details.url.indexOf('?') === -1 ? details.url.length : details.url.indexOf('?'));
+        if ( debug === true ) console.log('MCA considering: ', url);
 
-        // store transaction
-        spenibus_corsEverywhere.transactions[request.requestId] = transaction;
+        //  all ajax requests from jakcodex projects include `__source=jakcodex-`
+        if ( details.url.match(/(__source=jakcodex-)/) ) {
 
-        // force origin based on prefs
-        if(bg.prefs.staticOrigin) {
-            transaction.requestHeaders['origin'].value = bg.prefs.staticOrigin;
-        }
+            if ( debug === true ) console.log('MCA modifying: ' + url);
 
-        // apply modifications
-        return {
-            requestHeaders : transaction.request.requestHeaders
-        };
-    }
-
-
-    /***************************************************************************
-    responseHandler
-    ***/
-    ,responseHandler : function(response) {
-
-        // get transaction
-        let transaction = spenibus_corsEverywhere.transactions[response.requestId];
-
-        // processing flag
-        let doProcess = true;
-
-        // check activation whitelist
-        if(spenibus_corsEverywhere.activationWhitelistEnabled) {
-
-            // disable flag
-            doProcess = false;
-
-            for(let filter of spenibus_corsEverywhere.prefs.activationWhitelist) {
-
-                // looks like I don't need to do any escaping, cool
-                let pattern = filter.match(/^\/(.*)\/([a-z]*)$/i);
-                pattern = new RegExp(pattern[1], pattern[2]);
-
-                // stop at first match, enable f1ag
-                if(transaction.request.url.match(pattern)) {
-                    doProcess = true;
+            //  update the header if it is already present
+            for (var i = 0; i < details.responseHeaders.length; ++i) {
+                if (details.responseHeaders[i].name.toLowerCase() === rule.name.toLowerCase()) {
+                    flag = true;
+                    details.responseHeaders[i].value = rule.value;
                     break;
                 }
             }
+
+            //  add the header if it wasn't already present
+            if (!flag) details.responseHeaders.push(rule);
+
+            //  add an extension header so the request source can see this extension handled the request
+            details.responseHeaders.push({"name": "Access-Control-Allow-Methods", "value": "GET, PUT, POST, DELETE, HEAD, OPTIONS"});
+            details.responseHeaders.push({"name": "Access-Control-Expose-Headers", "value": "X-Jakcodex-CORS"});
+            details.responseHeaders.push({"name": "X-Jakcodex-CORS", "value": version});
+
+            //  send usage analytics for the rewritten request if enabled
+            var last = url.substring(url.lastIndexOf('/'));
+            if (
+                last.indexOf('.') === -1 &&
+                last !== '/'
+            ) muledump_cors.ga('send', 'event', {
+                eventCategory: 'Header Rewrite',
+                eventAction: 'muledump',
+                eventLabel: url
+            });
+
         }
 
-        // modify the headers
-        if(doProcess) {
+        return {responseHeaders: details.responseHeaders};
 
-            // store transaction response
-            transaction.response = response;
+    },
 
-            // shorthand access to response headers
-            for(let header of response.responseHeaders) {
-                transaction.responseHeaders[header.name.toLowerCase()] = header;
-            }
+    //  wrapper for google analytics to dump all activity to console
+    ga: function() {
 
-            // create response headers if necessary
-            for(let name of [
-                 'access-control-allow-origin'
-                ,'access-control-allow-methods'
-                ,'access-control-allow-headers'
-                ,'access-control-allow-credentials'
-            ]) {
-                // header exists, skip
-                if(transaction.responseHeaders[name]) {
-                    continue;
-                }
+        var gaargs = arguments;
 
-                // create header
-                let header = {
-                     name  : name
-                    ,value : "null"
-                };
+        browser.storage.sync.get([
+            'enabledAtStartup',
+            'usageAnalytics',
+            'cid'
+        ]).then((res) => {
 
-                // update response
-                transaction.response.responseHeaders.push(header);
-                transaction.response.responseHeaders.push({
-                    name: 'Access-Control-Expose-Headers',
-                    value: 'X-Jakcodex-CORS'
-                },{
-                    name: 'X-Jakcodex-CORS',
-                    value: version
-                });
+            //  do not run if analytics is disabled
+            if ( res.usageAnalytics === false  ) return;
 
-                // update shorthand
-                transaction.responseHeaders[name] = header;
-                transaction.responseHeaders['Access-Control-Expose-Headers'] = 'X-Jakcodex-CORS';
-                transaction.responseHeaders['X-Jakcodex-CORS'] = version;
-            }
+            var args = ['UA:'];
+            for ( var i = 0; i < gaargs.length; i++ ) args.push(gaargs[i]);
+            console.log.apply(null, args);
+            var request = new XMLHttpRequest();
+            var message = "v=1&tid=" + gaID + "&cid=" + (res.cid || muledump_cors.cid) + "&aip=1&ds=firefox-addon";
+            if ( gaargs[1] === 'pageview' ) message += "&t=pageview&dp=options.html";
+            if ( gaargs[1] === 'event' ) message += "&t=event&ec=" + (gaargs[2].eventCategory || '') + "&ea=" + (gaargs[2].eventAction || '') + "&el=" + (gaargs[2].eventLabel || '');
+            request.open("POST", "https://www.google-analytics.com/collect", true);
+            request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            request.send(message);
 
-            // set "access-control-allow-origin", prioritize "origin" else "*"
-            transaction.responseHeaders['access-control-allow-origin'].value =
-                transaction.requestHeaders['origin']
-                && transaction.requestHeaders['origin'].value !== null
-                    ? transaction.requestHeaders['origin'].value
-                    : '*';
+        });
 
-            // set "access-control-allow-methods"
-            if(
-                transaction.requestHeaders['access-control-request-method']
-                && transaction.requestHeaders['access-control-request-method'].value !== null
-            ) {
-                transaction.responseHeaders['access-control-allow-methods'].value =
-                    transaction.requestHeaders['access-control-request-method'].value
-            }
-
-            // set "access-control-allow-headers"
-            if(
-                transaction.requestHeaders['access-control-request-headers']
-                && transaction.requestHeaders['access-control-request-headers'].value !== null
-            ) {
-                transaction.responseHeaders['access-control-allow-headers'].value =
-                    transaction.requestHeaders['access-control-request-headers'].value
-            }
-
-            // set "access-control-allow-credentials"
-            transaction.responseHeaders['access-control-allow-credentials'].value = "true";
-        }
-
-        // delete transaction
-        delete spenibus_corsEverywhere.transactions[response.requestId];
-
-        // return headers
-        return {
-            responseHeaders: transaction.response.responseHeaders
-        };
     }
+
 };
 
-
-
-
-//************************************************************************** run
-var bg = spenibus_corsEverywhere.init();
+muledump_cors.init();
